@@ -33,6 +33,10 @@ Usage
 
 ``django-migration-linter DJANGO_PROJECT_FOLDER [GIT_COMMIT_ID] [--ignore-name-contains=IGNORE_NAME_CONTAINS] [--include-apps INCLUDE_APPS [INCLUDE_APPS ...] | --exclude-apps EXCLUDE_APPS [EXCLUDE_APPS ...]]``
 
+``python manage.py lintmigrations``
+
+``python manage.py makelintedmigrations``
+
 ================================================== ===========================================================================================================================
                    Parameter                                                                            Description
 ================================================== ===========================================================================================================================
