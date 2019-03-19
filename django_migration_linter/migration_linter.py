@@ -13,44 +13,36 @@
 # limitations under the License.
 
 from __future__ import print_function
+
+import hashlib
 import logging
 import os
 import re
 from subprocess import Popen, PIPE
-import sys
+
+from django.core.management import call_command
+from django.db import DEFAULT_DB_ALIAS
+from django.db.migrations import Migration
 
 from .cache import Cache
-from .constants import DEFAULT_CACHE_PATH, MIGRATION_FOLDER_NAME, __version__
-from .migration import Migration
-from .utils import is_directory, is_django_project, clean_bytes_to_str
+from .constants import DEFAULT_CACHE_PATH
+from .utils import clean_bytes_to_str, get_migration_abspath
 from .sql_analyser import analyse_sql_statements
 
 logger = logging.getLogger(__name__)
 
+DJANGO_APPS_WITH_MIGRATIONS = ("admin", "auth", "contenttypes", "sessions")
+
 
 class MigrationLinter(object):
-    def __init__(self, project_path, **kwargs):
-        # Verify correctness
-        if not is_directory(project_path):
-            raise ValueError(
-                "The given path {0} does not seem to be a directory.".format(
-                    project_path
-                )
-            )
-        if not is_django_project(project_path):
-            raise ValueError(
-                "The given path {0} does not seem to be a django project.".format(
-                    project_path
-                )
-            )
-
+    def __init__(self, **kwargs):
         # Store parameters and options
-        self.django_path = os.path.abspath(project_path)
+        self.django_path = os.path.abspath(__file__)  # todo
         self.ignore_name_contains = kwargs.get("ignore_name_contains", None)
         self.ignore_name = kwargs.get("ignore_name", None) or tuple()
         self.include_apps = kwargs.get("include_apps", None)
         self.exclude_apps = kwargs.get("exclude_apps", None)
-        self.database = kwargs.get("database", None) or "default"
+        self.database = kwargs.get("database", None) or DEFAULT_DB_ALIAS
         self.cache_path = kwargs.get("cache_path", None) or DEFAULT_CACHE_PATH
         self.no_cache = kwargs.get("no_cache", None) or False
 
@@ -67,22 +59,27 @@ class MigrationLinter(object):
             self.old_cache.load()
 
     def lint_migration(self, migration):
-        app_name = migration.app_name
+        app_label = migration.app_label
         migration_name = migration.name
-        print("({0}, {1})... ".format(app_name, migration_name), end="")
+        print("({0}, {1})... ".format(app_label, migration_name), end="")
         self.nb_total += 1
 
-        md5hash = migration.get_md5hash()
+        hash_md5 = hashlib.md5()
+        with open(get_migration_abspath(app_label, migration_name), "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        md5hash = hash_md5.hexdigest()
+
         if not self.no_cache and md5hash in self.old_cache:
             self.lint_cached_migration(md5hash)
             return
 
-        if self.should_ignore_migration(app_name, migration_name):
+        if self.should_ignore_migration(app_label, migration_name):
             print("IGNORE")
             self.nb_ignored += 1
             return
 
-        sql_statements = self.get_sql(app_name, migration_name)
+        sql_statements = self.get_sql(app_label, migration_name)
         analysis_result = analyse_sql_statements(sql_statements)
         errors = analysis_result["errors"]
 
@@ -161,41 +158,15 @@ class MigrationLinter(object):
     def has_errors(self):
         return self.nb_erroneous > 0
 
-    def get_sql(self, app_name, migration_name):
-        """ It would be much faster to call the
-        command directly from the code using
-        call_command(), but requires the code
-        to setup django (by calling django.setup())
-        and set the DJANGO_SETTINGS_MODULE.
-        However, django is global and doesn't allow
-        multiple linter instances to exist at the same time.
-        (because they would all just lint the same django project)
-        Even if calling a shell is slow and ugly, for now,
-        it allows to seperate the instances correctly.
-        """
-        sqlmigrate_command = (
-            "cd {0} && {1} manage.py sqlmigrate {2} {3} --database {4}"
-        ).format(
-            self.django_path, sys.executable, app_name, migration_name, self.database
-        )
-        logger.info("Executing {0}".format(sqlmigrate_command))
-        sqlmigrate_process = Popen(
-            sqlmigrate_command, shell=True, stdout=PIPE, stderr=PIPE
-        )
-
-        sql_statements = []
-        for line in map(clean_bytes_to_str, sqlmigrate_process.stdout.readlines()):
-            sql_statements.append(line)
-        sqlmigrate_process.wait()
-        if sqlmigrate_process.returncode != 0:
-            _, err = sqlmigrate_process.communicate()
-            raise RuntimeError(
-                "sqlmigrate command failed {0}".format(err.decode("utf-8"))
-            )
-        logger.info("Found {0} sql migration lines".format(len(sql_statements)))
-        return sql_statements
+    def get_sql(self, app_label, migration_name):
+        logger.info("Calling sqlmigrate command {} {}".format(app_label, migration_name))
+        dev_null = open(os.devnull, "w")
+        sql_statement = call_command("sqlmigrate", app_label, migration_name, database=self.database, stdout=dev_null)
+        return sql_statement.splitlines()
 
     def _gather_migrations_git(self, git_commit_id):
+        from django.db.migrations.loader import MIGRATIONS_MODULE_NAME
+
         migrations = []
         # Get changes since specified commit
         git_diff_command = (
@@ -206,7 +177,7 @@ class MigrationLinter(object):
         for line in map(clean_bytes_to_str, diff_process.stdout.readlines()):
             # Only gather lines that include added migrations
             if (
-                re.search(r"/{0}/.*\.py".format(MIGRATION_FOLDER_NAME), line)
+                re.search(r"/{0}/.*\.py".format(MIGRATIONS_MODULE_NAME), line)
                 and "__init__" not in line
             ):
                 migrations.append(Migration(os.path.join(self.django_path, line)))
@@ -221,131 +192,22 @@ class MigrationLinter(object):
         return migrations
 
     def _gather_all_migrations(self):
-        migrations = []
-        for root, dirs, files in os.walk(self.django_path):
-            for file_name in sorted(files):
-                if (
-                    os.path.basename(root) == MIGRATION_FOLDER_NAME
-                    and file_name.endswith(".py")
-                    and file_name != "__init__.py"
-                ):
-                    full_migration_path = os.path.join(root, file_name)
-                    migrations.append(Migration(full_migration_path))
-        return migrations
+        # type: () -> Iterator[Migration]
+        from django.db.migrations.loader import MigrationLoader
+        migration_loader = MigrationLoader(connection=None, load=False)
+        migration_loader.load_disk()
+        # Prune Django apps
+        for (app_label, _), migration in migration_loader.disk_migrations.items():
+            if app_label not in DJANGO_APPS_WITH_MIGRATIONS:
+                yield migration
 
-    def should_ignore_migration(self, app_name, migration_name):
+    def should_ignore_migration(self, app_label, migration_name):
         return (
-            (self.include_apps and app_name not in self.include_apps)
-            or (self.exclude_apps and app_name in self.exclude_apps)
+            (self.include_apps and app_label not in self.include_apps)
+            or (self.exclude_apps and app_label in self.exclude_apps)
             or (
                 self.ignore_name_contains
                 and self.ignore_name_contains in migration_name
             )
             or (migration_name in self.ignore_name)
         )
-
-
-def _main():
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Detect backward incompatible django migrations."
-    )
-    parser.add_argument(
-        "django_folder",
-        metavar="DJANGO_FOLDER",
-        type=str,
-        nargs=1,
-        help="the path to the django project",
-    )
-    parser.add_argument(
-        "commit_id",
-        metavar="GIT_COMMIT_ID",
-        type=str,
-        nargs="?",
-        help=(
-            "if specified, only migrations since this commit "
-            "will be taken into account. If not specified, "
-            "the initial repo commit will be used"
-        ),
-    )
-    parser.add_argument(
-        "--ignore-name-contains",
-        type=str,
-        nargs="?",
-        help="ignore migrations containing this name",
-    )
-    parser.add_argument(
-        "--ignore-name",
-        type=str,
-        nargs="*",
-        help="ignore migrations with exactly one of these names",
-    )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="print more information during execution",
-    )
-    parser.add_argument(
-        "--version", "-V", action="version", version="%(prog)s {}".format(__version__)
-    )
-    parser.add_argument(
-        "--database",
-        type=str,
-        nargs="?",
-        help=(
-            "specify the database for which to generate the SQL. Defaults to default"
-        ),
-    )
-
-    cache_group = parser.add_mutually_exclusive_group(required=False)
-    cache_group.add_argument(
-        "--cache-path",
-        type=str,
-        help="specify a directory that should be used to store cache-files in.",
-    )
-    cache_group.add_argument(
-        "--no-cache", action="store_true", help="don't use a cache"
-    )
-
-    incl_excl_group = parser.add_mutually_exclusive_group(required=False)
-    incl_excl_group.add_argument(
-        "--include-apps",
-        type=str,
-        nargs="*",
-        help="check only migrations that are in the specified django apps",
-    )
-    incl_excl_group.add_argument(
-        "--exclude-apps",
-        type=str,
-        nargs="*",
-        help="ignore migrations that are in the specified django apps",
-    )
-
-    args = parser.parse_args()
-    if args.verbose:
-        logging.basicConfig(format="%(message)s", level=logging.DEBUG)
-    else:
-        logging.basicConfig(format="%(message)s")
-
-    folder_name = args.django_folder[0]
-    # Create and use linter
-    linter = MigrationLinter(
-        folder_name,
-        ignore_name_contains=args.ignore_name_contains,
-        ignore_name=args.ignore_name,
-        include_apps=args.include_apps,
-        exclude_apps=args.exclude_apps,
-        database=args.database,
-        cache_path=args.cache_path,
-        no_cache=args.no_cache,
-    )
-    linter.lint_all_migrations(git_commit_id=args.commit_id)
-    linter.print_summary()
-    if linter.has_errors:
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    _main()
