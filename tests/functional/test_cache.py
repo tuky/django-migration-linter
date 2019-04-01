@@ -13,8 +13,10 @@
 # limitations under the License.
 import os
 import shutil
-import unittest
 import sys
+
+from django.db.migrations import Migration
+from django.test import TestCase
 
 from tests import fixtures
 
@@ -26,34 +28,42 @@ else:
     import mock
 
 
-class CacheTest(unittest.TestCase):
+class CacheTest(TestCase):
     MIGRATION_FILE = os.path.join(fixtures.ALTER_COLUMN_PROJECT, 'test_app', 'migrations', '0001_initial.py')
 
-    def test_cache_normal(self):
-        cache_file = os.path.join(DEFAULT_CACHE_PATH, 'test_project_add_not_null_column.pickle')
+    def setUp(self):
+        self.test_cache_filename = "test_cache_file"
+        cache_file = os.path.join(DEFAULT_CACHE_PATH, self.test_cache_filename + '.pickle')
         if os.path.exists(cache_file):
             os.remove(cache_file)
-        linter = MigrationLinter(fixtures.ADD_NOT_NULL_COLUMN_PROJECT)
 
-        with mock.patch.object(MigrationLinter, 'get_sql', wraps=linter.get_sql)as sql_mock:
+    @mock.patch("django_migration_linter.MigrationLinter._gather_all_migrations",
+                return_value=[
+                    Migration('0001_create_table', 'app_add_not_null_column'),
+                    Migration('0002_add_new_not_null_field', 'app_add_not_null_column')
+                ])
+    def test_cache_normal(self, *args):
+        linter = MigrationLinter(self.test_cache_filename)
+
+        with mock.patch.object(MigrationLinter, 'get_sql', wraps=linter.get_sql) as sql_mock:
             linter.lint_all_migrations()
             self.assertEqual(sql_mock.call_count, 2)
 
         cache = Cache(
-            fixtures.ADD_NOT_NULL_COLUMN_PROJECT,
+            self.test_cache_filename,
             DEFAULT_CACHE_PATH
         )
         cache.load()
 
-        self.assertEqual(cache['3ef74e7f3e53e273e2fc95379248d58d']['result'], 'OK')
-        self.assertEqual(cache['e1e312b6d08ecbe017c25c58fc2be257']['result'], 'ERR')
+        self.assertEqual(cache['88bc96bd3bb7d4cd1643b56fecb4809a']['result'], 'OK')
+        self.assertEqual(cache['fe78506804c41db1d4404bcf5d195698']['result'], 'ERR')
         self.assertListEqual(
-            cache['e1e312b6d08ecbe017c25c58fc2be257']['errors'],
+            cache['fe78506804c41db1d4404bcf5d195698']['errors'],
             [{'err_msg': 'RENAMING tables', 'code': 'RENAME_TABLE', 'table': None, 'column': None}]
         )
 
         # Start the Linter again -> should use cache now.
-        linter = MigrationLinter(fixtures.ADD_NOT_NULL_COLUMN_PROJECT)
+        linter = MigrationLinter(self.test_cache_filename)
 
         with mock.patch.object(MigrationLinter, 'get_sql', wraps=linter.get_sql) as sql_mock:
             linter.lint_all_migrations()
@@ -61,27 +71,29 @@ class CacheTest(unittest.TestCase):
 
         self.assertTrue(linter.has_errors)
 
-    def test_cache_ignored(self):
-        cache_file = os.path.join(DEFAULT_CACHE_PATH, 'test_project_ignore_migration.pickle')
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
-        linter = MigrationLinter(fixtures.IGNORE_MIGRATION_PROJECT)
+    @mock.patch("django_migration_linter.MigrationLinter._gather_all_migrations",
+                return_value=[
+                    Migration('0001_initial', 'app_ignore_migration'),
+                    Migration('0002_ignore_migration', 'app_ignore_migration')
+                ])
+    def test_cache_ignored(self, *args):
+        linter = MigrationLinter(self.test_cache_filename)
 
         with mock.patch.object(MigrationLinter, 'get_sql', wraps=linter.get_sql) as sql_mock:
             linter.lint_all_migrations()
             self.assertEqual(sql_mock.call_count, 2)
 
         cache = Cache(
-            fixtures.IGNORE_MIGRATION_PROJECT,
+            self.test_cache_filename,
             DEFAULT_CACHE_PATH
         )
         cache.load()
 
-        self.assertEqual(cache['63230606af0eccaef7f1f78c537c624c']['result'], 'OK')
-        self.assertEqual(cache['5c5ca1780a9f28439c1defc1f32af894']['result'], 'IGNORE')
+        self.assertEqual(cache['341ff774d5bcd1a8ccaa37a24569de42']['result'], 'OK')
+        self.assertEqual(cache['9643981bb4da34cd878cbfff481e218d']['result'], 'IGNORE')
 
         # Start the Linter again -> should use cache now.
-        linter = MigrationLinter(fixtures.IGNORE_MIGRATION_PROJECT)
+        linter = MigrationLinter(self.test_cache_filename)
 
         with mock.patch.object(MigrationLinter, 'get_sql', wraps=linter.get_sql) as sql_mock:
             linter.lint_all_migrations()

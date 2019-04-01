@@ -22,26 +22,35 @@ _FIXTURES_FOLDER = os.path.join(_BASE_DIR, 'test_project_fixtures/')
 
 ADD_NOT_NULL_COLUMN_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_add_not_null_column/')
+ADD_NOT_NULL_COLUMN_PROJECT_SETTINGS = 'test_project_add_not_null_column.settings'
 CREATE_TABLE_WITH_NOT_NULL_COLUMN_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_create_table_with_not_null_column/')
+CREATE_TABLE_WITH_NOT_NULL_COLUMN_PROJECT_SETTINGS = 'test_project_create_table_with_not_null_column.settings'
 DROP_COLUMN_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_drop_column/')
+DROP_COLUMN_PROJECT_SETTINGS = 'test_project_drop_column.settings'
 RENAME_COLUMN_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_rename_column/')
+RENAME_COLUMN_PROJECT_SETTINGS = 'test_project_rename_column.settings'
 ALTER_COLUMN_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_alter_column')
+ALTER_COLUMN_PROJECT_SETTINGS = 'test_project_alter_column.settings'
 RENAME_TABLE_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_rename_table/')
+RENAME_TABLE_PROJECT_SETTINGS = 'test_project_rename_table.settings'
 ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_add_not_null_column_followed_by_default/')
+ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT_PROJECT_SETTINGS = 'test_project_add_not_null_column_followed_by_default.settings'
 MULTI_COMMIT_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_multi_commit/')
+MULTI_COMMIT_PROJECT_SETTINGS = 'test_project_multi_commit.settings'
 CORRECT_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_correct_project/')
 DELETED_MIGRATION_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_deleted_migration_project/')
 IGNORE_MIGRATION_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_project_ignore_migration/')
+IGNORE_MIGRATION_PROJECT_SETTINGS = 'test_project_ignore_migration.settings'
 
 NOT_DJANGO_GIT_PROJECT = os.path.join(
     _FIXTURES_FOLDER, 'test_git_project/')

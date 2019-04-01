@@ -39,6 +39,7 @@ install_requirements = [
 
 test_requirements = [
     'pytest',
+    'pytest-django',
     'tox',
     'django-fake-database-backends',
 ]

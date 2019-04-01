@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django_migration_linter',
     'tests.test_project.app_add_not_null_column',
     'tests.test_project.app_correct',
+    'tests.test_project.app_ignore_migration',
 ]
 
 MIDDLEWARE = [

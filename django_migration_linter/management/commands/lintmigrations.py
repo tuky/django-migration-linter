@@ -1,9 +1,13 @@
 import logging
+import os
 import sys
+from importlib import import_module
 
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
 from django_migration_linter import MigrationLinter
+from django_migration_linter.constants import __version__
 
 
 class Command(BaseCommand):
@@ -66,17 +70,22 @@ class Command(BaseCommand):
             help="ignore migrations that are in the specified django apps",
         )
 
-        #args = parser.parse_args()
+        # args = parser.parse_args()
 
-        #folder_name = args.django_folder[0]
+        # folder_name = args.django_folder[0]
 
     def handle(self, *args, **options):
+        settings_path = os.path.dirname(
+            import_module(os.getenv("DJANGO_SETTINGS_MODULE")).__file__
+        )
+
         if options["verbosity"] > 1:
             logging.basicConfig(format="%(message)s", level=logging.DEBUG)
         else:
             logging.basicConfig(format="%(message)s")
 
         linter = MigrationLinter(
+            settings_path,
             ignore_name_contains=options["ignore_name_contains"],
             ignore_name=options["ignore_name"],
             include_apps=options["include_apps"],
@@ -89,3 +98,6 @@ class Command(BaseCommand):
         linter.print_summary()
         if linter.has_errors:
             sys.exit(1)
+
+    def get_version(self):
+        return __version__

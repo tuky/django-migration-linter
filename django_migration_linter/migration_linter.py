@@ -35,9 +35,9 @@ DJANGO_APPS_WITH_MIGRATIONS = ("admin", "auth", "contenttypes", "sessions")
 
 
 class MigrationLinter(object):
-    def __init__(self, **kwargs):
+    def __init__(self, path, **kwargs):
         # Store parameters and options
-        self.django_path = os.path.abspath(__file__)  # todo
+        self.django_path = path
         self.ignore_name_contains = kwargs.get("ignore_name_contains", None)
         self.ignore_name = kwargs.get("ignore_name", None) or tuple()
         self.include_apps = kwargs.get("include_apps", None)
@@ -59,6 +59,7 @@ class MigrationLinter(object):
             self.old_cache.load()
 
     def lint_migration(self, migration):
+        # type: (Migration) -> None
         app_label = migration.app_label
         migration_name = migration.name
         print("({0}, {1})... ".format(app_label, migration_name), end="")
@@ -159,9 +160,17 @@ class MigrationLinter(object):
         return self.nb_erroneous > 0
 
     def get_sql(self, app_label, migration_name):
-        logger.info("Calling sqlmigrate command {} {}".format(app_label, migration_name))
+        logger.info(
+            "Calling sqlmigrate command {} {}".format(app_label, migration_name)
+        )
         dev_null = open(os.devnull, "w")
-        sql_statement = call_command("sqlmigrate", app_label, migration_name, database=self.database, stdout=dev_null)
+        sql_statement = call_command(
+            "sqlmigrate",
+            app_label,
+            migration_name,
+            database=self.database,
+            stdout=dev_null,
+        )
         return sql_statement.splitlines()
 
     def _gather_migrations_git(self, git_commit_id):
@@ -194,6 +203,7 @@ class MigrationLinter(object):
     def _gather_all_migrations(self):
         # type: () -> Iterator[Migration]
         from django.db.migrations.loader import MigrationLoader
+
         migration_loader = MigrationLoader(connection=None, load=False)
         migration_loader.load_disk()
         # Prune Django apps
