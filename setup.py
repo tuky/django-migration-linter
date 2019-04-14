@@ -32,19 +32,14 @@ def get_version():
 with open(path.join(PROJECT_DIR, 'README.rst')) as f:
     long_description = f.read()
 
-install_requirements = [
-    'django>=1.11',
-    'appdirs==1.4.3'
-]
 
-test_requirements = [
-    'pytest',
-    'pytest-django',
-    'tox',
-    'django-fake-database-backends',
-]
+with open(path.join(PROJECT_DIR, 'requirements.txt')) as f:
+    install_requirements = f.read()
 
-# noinspection PyUnresolvedReferences
+with open(path.join(PROJECT_DIR, 'dev-requirements.txt')) as f:
+    test_requirements = f.read()
+
+
 setup(
     name='django-migration-linter',
     version=get_version(),

@@ -67,4 +67,4 @@ class TestLinterFunctions(TestCase):
     def test_gather_all_migrations(self):
         linter = MigrationLinter()
         migrations = linter._gather_all_migrations()
-        self.assertEqual(len(list(migrations)), 4)
+        self.assertGreater(len(list(migrations)), 1)

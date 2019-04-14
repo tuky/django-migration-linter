@@ -37,6 +37,15 @@ def split_path(path):
     return decomposed_path
 
 
+def split_migration_path(migration_path):
+    from django.db.migrations.loader import MIGRATIONS_MODULE_NAME
+
+    decomposed_path = split_path(migration_path)
+    for i, p in enumerate(decomposed_path):
+        if p == MIGRATIONS_MODULE_NAME:
+            return decomposed_path[i - 1], os.path.splitext(decomposed_path[i + 1])[0]
+
+
 def clean_bytes_to_str(byte_input):
     return byte_input.decode("utf-8").strip()
 

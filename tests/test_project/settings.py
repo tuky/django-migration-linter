@@ -39,8 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_migration_linter',
     'tests.test_project.app_add_not_null_column',
+    'tests.test_project.app_add_not_null_column_followed_by_default',
+    'tests.test_project.app_alter_column',
     'tests.test_project.app_correct',
+    'tests.test_project.app_create_table_with_not_null_column',
+    'tests.test_project.app_drop_column',
     'tests.test_project.app_ignore_migration',
+    'tests.test_project.app_rename_column',
+    'tests.test_project.app_rename_table',
 ]
 
 MIDDLEWARE = [
@@ -81,16 +87,16 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     },
-    #'mysql': {
-    #    'ENGINE': 'django.db.backends.mysql',
-    #    'NAME': 'mysql',
-    #},
-    # 'sqlite': {
-    #     'ENGINE': 'django_fake_database_backends.backends.sqlite3',
-    #     'NAME': 'sqlite3',
+    'sqlite': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'sqlite3',
+    },
+    # 'mysql': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'mysql',
     # },
     # 'postgresql': {
-    #     'ENGINE': 'django_fake_database_backends.backends.postgresql',
+    #     'ENGINE': 'django.db.backends.postgresql',
     #     'NAME': 'postgresql',
     # },
 }

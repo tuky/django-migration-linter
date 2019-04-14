@@ -13,79 +13,18 @@
 # limitations under the License.
 
 import os
-import shutil
 
-_BASE_DIR = os.path.join(
+_PROJ_TEST_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'tests/')
-_FIXTURES_FOLDER = os.path.join(_BASE_DIR, 'test_project_fixtures/')
-
-ADD_NOT_NULL_COLUMN_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_add_not_null_column/')
-ADD_NOT_NULL_COLUMN_PROJECT_SETTINGS = 'test_project_add_not_null_column.settings'
-CREATE_TABLE_WITH_NOT_NULL_COLUMN_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_create_table_with_not_null_column/')
-CREATE_TABLE_WITH_NOT_NULL_COLUMN_PROJECT_SETTINGS = 'test_project_create_table_with_not_null_column.settings'
-DROP_COLUMN_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_drop_column/')
-DROP_COLUMN_PROJECT_SETTINGS = 'test_project_drop_column.settings'
-RENAME_COLUMN_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_rename_column/')
-RENAME_COLUMN_PROJECT_SETTINGS = 'test_project_rename_column.settings'
-ALTER_COLUMN_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_alter_column')
-ALTER_COLUMN_PROJECT_SETTINGS = 'test_project_alter_column.settings'
-RENAME_TABLE_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_rename_table/')
-RENAME_TABLE_PROJECT_SETTINGS = 'test_project_rename_table.settings'
-ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_add_not_null_column_followed_by_default/')
-ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT_PROJECT_SETTINGS = 'test_project_add_not_null_column_followed_by_default.settings'
-MULTI_COMMIT_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_multi_commit/')
-MULTI_COMMIT_PROJECT_SETTINGS = 'test_project_multi_commit.settings'
-CORRECT_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_correct_project/')
-DELETED_MIGRATION_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_deleted_migration_project/')
-IGNORE_MIGRATION_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_project_ignore_migration/')
-IGNORE_MIGRATION_PROJECT_SETTINGS = 'test_project_ignore_migration.settings'
-
-NOT_DJANGO_GIT_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_git_project/')
-NOT_GIT_DJANGO_PROJECT = os.path.join(
-    _FIXTURES_FOLDER, 'test_django_without_git_project/')
-
-NON_GIT_ROOT_GIT_FOLDER = os.path.join(
-    _FIXTURES_FOLDER, 'test_non_root_git_project/'
-)
-NON_GIT_ROOT_DJANGO_PROJECT = os.path.join(
-    NON_GIT_ROOT_GIT_FOLDER, 'django_project/'
+    'tests/',
+    "test_project",
 )
 
-
-ALL_GIT_PROJECTS = (
-    NOT_DJANGO_GIT_PROJECT,
-    MULTI_COMMIT_PROJECT,
-    DELETED_MIGRATION_PROJECT,
-    NON_GIT_ROOT_GIT_FOLDER,
-)
-
-
-def prepare_git_project(path):
-    """Copy the git/ folder to .git/ so it is
-    actually versioned"""
-    src_git = os.path.join(path, 'git/')
-    dest_git = os.path.join(path, '.git/')
-    try:
-        shutil.copytree(src_git, dest_git)
-    except OSError:
-        pass  # .git/ might already exist
-
-
-def clear_all_git_projects():
-    """Delete all .git/ folders in test projects"""
-    for project_path in ALL_GIT_PROJECTS:
-        git_path = os.path.join(project_path, '.git/')
-        shutil.rmtree(git_path, ignore_errors=True)
+CREATE_TABLE_WITH_NOT_NULL_COLUMN = "app_create_table_with_not_null_column"
+ADD_NOT_NULL_COLUMN = "app_add_not_null_column"
+DROP_COLUMN = "app_drop_column"
+RENAME_COLUMN = "app_rename_column"
+RENAME_TABLE = "app_rename_table"
+IGNORE_MIGRATION = "app_ignore_migration"
+ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT = "app_add_not_null_column_followed_by_default"
+ALTER_COLUMN = "app_alter_column"

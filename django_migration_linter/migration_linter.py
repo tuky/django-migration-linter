@@ -26,7 +26,7 @@ from django.db.migrations import Migration
 
 from .cache import Cache
 from .constants import DEFAULT_CACHE_PATH
-from .utils import clean_bytes_to_str, get_migration_abspath
+from .utils import clean_bytes_to_str, get_migration_abspath, split_migration_path
 from .sql_analyser import analyse_sql_statements
 
 logger = logging.getLogger(__name__)
@@ -35,9 +35,10 @@ DJANGO_APPS_WITH_MIGRATIONS = ("admin", "auth", "contenttypes", "sessions")
 
 
 class MigrationLinter(object):
-    def __init__(self, path, **kwargs):
+    def __init__(self, path=None, **kwargs):
         # Store parameters and options
-        self.django_path = path
+        self.manage_py = path
+        self.django_path = os.path.dirname(self.manage_py) if self.manage_py else None
         self.ignore_name_contains = kwargs.get("ignore_name_contains", None)
         self.ignore_name = kwargs.get("ignore_name", None) or tuple()
         self.include_apps = kwargs.get("include_apps", None)
@@ -189,7 +190,8 @@ class MigrationLinter(object):
                 re.search(r"/{0}/.*\.py".format(MIGRATIONS_MODULE_NAME), line)
                 and "__init__" not in line
             ):
-                migrations.append(Migration(os.path.join(self.django_path, line)))
+                app_label, name = split_migration_path(line)
+                migrations.append(Migration(name, app_label))
         diff_process.wait()
 
         if diff_process.returncode != 0:
