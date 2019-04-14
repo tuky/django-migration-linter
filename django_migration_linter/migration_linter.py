@@ -37,8 +37,8 @@ DJANGO_APPS_WITH_MIGRATIONS = ("admin", "auth", "contenttypes", "sessions")
 class MigrationLinter(object):
     def __init__(self, path=None, **kwargs):
         # Store parameters and options
-        self.manage_py = path
-        self.django_path = os.path.dirname(self.manage_py) if self.manage_py else None
+        # TODO: explicit kwargs
+        self.django_path = path
         self.ignore_name_contains = kwargs.get("ignore_name_contains", None)
         self.ignore_name = kwargs.get("ignore_name", None) or tuple()
         self.include_apps = kwargs.get("include_apps", None)
@@ -54,13 +54,15 @@ class MigrationLinter(object):
         self.nb_total = 0
 
         # Initialise cache. Read from old, write to new to prune old entries.
-        if not self.no_cache:
+        if self.should_use_cache():
             self.old_cache = Cache(self.django_path, self.cache_path)
             self.new_cache = Cache(self.django_path, self.cache_path)
             self.old_cache.load()
 
+    def should_use_cache(self):
+        return self.django_path and not self.no_cache
+
     def lint_migration(self, migration):
-        # type: (Migration) -> None
         app_label = migration.app_label
         migration_name = migration.name
         print("({0}, {1})... ".format(app_label, migration_name), end="")
@@ -72,7 +74,7 @@ class MigrationLinter(object):
                 hash_md5.update(chunk)
         md5hash = hash_md5.hexdigest()
 
-        if not self.no_cache and md5hash in self.old_cache:
+        if self.should_use_cache() and md5hash in self.old_cache:
             self.lint_cached_migration(md5hash)
             return
 
@@ -88,21 +90,21 @@ class MigrationLinter(object):
         if analysis_result["ignored"]:
             print("IGNORE")
             self.nb_ignored += 1
-            if not self.no_cache:
+            if self.should_use_cache():
                 self.new_cache[md5hash] = {"result": "IGNORE"}
             return
 
         if not errors:
             print("OK")
             self.nb_valid += 1
-            if not self.no_cache:
+            if self.should_use_cache():
                 self.new_cache[md5hash] = {"result": "OK"}
             return
 
         print("ERR")
         self.nb_erroneous += 1
         self.print_errors(errors)
-        if not self.no_cache:
+        if self.should_use_cache():
             self.new_cache[md5hash] = {"result": "ERR", "errors": errors}
 
     def lint_cached_migration(self, md5hash):
@@ -143,7 +145,7 @@ class MigrationLinter(object):
         for m in migrations:
             self.lint_migration(m)
 
-        if not self.no_cache:
+        if self.should_use_cache():
             self.new_cache.save()
 
     def print_summary(self):
@@ -180,7 +182,7 @@ class MigrationLinter(object):
         migrations = []
         # Get changes since specified commit
         git_diff_command = (
-            "cd {0} && git diff --relative --name-only --diff-filter=A {1}"
+            "cd {0} && git diff --relative --name-only --diff-filter=AR {1}"
         ).format(self.django_path, git_commit_id)
         logger.info("Executing {0}".format(git_diff_command))
         diff_process = Popen(git_diff_command, shell=True, stdout=PIPE, stderr=PIPE)
@@ -203,7 +205,6 @@ class MigrationLinter(object):
         return migrations
 
     def _gather_all_migrations(self):
-        # type: () -> Iterator[Migration]
         from django.db.migrations.loader import MigrationLoader
 
         migration_loader = MigrationLoader(connection=None, load=False)

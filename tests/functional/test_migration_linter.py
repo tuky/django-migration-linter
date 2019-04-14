@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 import os
 
 from django.conf import settings
@@ -23,7 +23,9 @@ from tests import fixtures
 
 class BaseBackwardCompatibilityDetection(object):
     def setUp(self, *args, **kwargs):
-        self.test_project_path = os.path.join(os.path.dirname(settings.BASE_DIR), 'manage.py')
+        logging.basicConfig(format="%(message)s", level=logging.WARNING)
+
+        self.test_project_path = os.path.dirname(settings.BASE_DIR)
         return super(BaseBackwardCompatibilityDetection, self).setUp(*args, **kwargs)
 
     def _test_linter_finds_errors(self, app=None, commit_id=None):
@@ -89,9 +91,9 @@ class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDete
         self._test_linter_finds_errors(app)
 
 
-#class MySqlBackwardCompatibilityDetectionTestCase(TestCase, BaseBackwardCompatibilityDetection):
-#    DATABASE = "mysql"
+class MySqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
+    DATABASE = "mysql"
 
 
-#class PostgresqlBackwardCompatibilityDetectionTestCase(TestCase, BaseBackwardCompatibilityDetection):
-#    DATABASE = "postgresql"
+class PostgresqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
+    DATABASE = "postgresql"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from django_migration_linter.utils import split_path
+from django_migration_linter.utils import split_path, split_migration_path
 
 
 class SplitPathTest(unittest.TestCase):
@@ -37,3 +37,21 @@ class SplitPathTest(unittest.TestCase):
     def test_split_folder_path_trailing_slashes(self):
         split = split_path('/foo/bar///')
         self.assertEqual(split, ["/", "foo", "bar"])
+
+    def test_split_migration_long_path(self):
+        input_path = 'apps/the_app/migrations/0001_stuff.py'
+        app, mig = split_migration_path(input_path)
+        self.assertEqual(app, 'the_app')
+        self.assertEqual(mig, '0001_stuff')
+
+    def test_split_migration_path(self):
+        input_path = 'the_app/migrations/0001_stuff.py'
+        app, mig = split_migration_path(input_path)
+        self.assertEqual(app, 'the_app')
+        self.assertEqual(mig, '0001_stuff')
+
+    def test_split_migration_full_path(self):
+        input_path = '/home/user/djangostuff/apps/the_app/migrations/0001_stuff.py'
+        app, mig = split_migration_path(input_path)
+        self.assertEqual(app, 'the_app')
+        self.assertEqual(mig, '0001_stuff')

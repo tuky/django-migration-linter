@@ -91,14 +91,20 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'sqlite3',
     },
-    # 'mysql': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'mysql',
-    # },
-    # 'postgresql': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'postgresql',
-    # },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django_migration_linter_test_project',
+        'USER': "travis",
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+    },
+    'postgresql': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'django_migration_linter_test_project',
+        'USER': "postgres",
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+    },
 }
 
 

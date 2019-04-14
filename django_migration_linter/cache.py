@@ -20,7 +20,9 @@ from .utils import split_path
 
 class Cache(dict):
     def __init__(self, django_folder, cache_path):
-        self.filename = os.path.join(cache_path, "{0}.pickle".format(django_folder))
+        self.filename = os.path.join(
+            cache_path, "{0}.pickle".format(django_folder.replace(os.sep, "_"))
+        )
 
         if not os.path.exists(os.path.dirname(self.filename)):
             os.makedirs(os.path.dirname(self.filename))

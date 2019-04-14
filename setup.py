@@ -33,11 +33,12 @@ with open(path.join(PROJECT_DIR, 'README.rst')) as f:
     long_description = f.read()
 
 
-with open(path.join(PROJECT_DIR, 'requirements.txt')) as f:
-    install_requirements = f.read()
-
-with open(path.join(PROJECT_DIR, 'dev-requirements.txt')) as f:
-    test_requirements = f.read()
+# with open(path.join(PROJECT_DIR, 'requirements.txt')) as f:
+#     install_requirements = f.read()
+#
+#
+# with open(path.join(PROJECT_DIR, 'dev-requirements.txt')) as f:
+#     test_requirements = f.read()
 
 
 setup(
@@ -51,9 +52,9 @@ setup(
     license='Apache License 2.0',
 
     packages=find_packages(exclude=['tests/']),
-    install_requires=install_requirements,
+    install_requires=["django", "appdirs"],
     extras_require={
-        'test': test_requirements
+        'test': ["tox", "mysqlclient", "psycopg2-binary"]
     },
 
     keywords='django migration lint linter database backward compatibility',

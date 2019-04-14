@@ -4,7 +4,6 @@ import sys
 from importlib import import_module
 
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
 from django_migration_linter import MigrationLinter
 from django_migration_linter.constants import __version__
