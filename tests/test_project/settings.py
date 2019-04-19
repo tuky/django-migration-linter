@@ -100,7 +100,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'django_migration_linter_test_project',
         'USER': "postgres",
-    },
+   },
 }
 
 
