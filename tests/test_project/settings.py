@@ -80,8 +80,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'tests.test_project.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -102,14 +100,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'django_migration_linter_test_project',
         'USER': "postgres",
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
     },
 }
 
 
 # Password validation
-# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
