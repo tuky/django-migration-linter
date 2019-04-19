@@ -31,7 +31,7 @@ class BaseBackwardCompatibilityDetection(object):
     def _test_linter_finds_errors(self, app=None, commit_id=None):
         if app is not None:
             app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.DATABASE, no_cache=True)
+        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.databases[0], no_cache=True)
         linter.lint_all_migrations(git_commit_id=commit_id)
 
         self.assertTrue(linter.has_errors)
@@ -40,7 +40,7 @@ class BaseBackwardCompatibilityDetection(object):
     def _test_linter_finds_no_errors(self, app=None, commit_id=None):
         if app is not None:
             app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.DATABASE, no_cache=True)
+        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.databases[0], no_cache=True)
         linter.lint_all_migrations(git_commit_id=commit_id)
 
         self.assertFalse(linter.has_errors)
@@ -84,7 +84,7 @@ class BaseBackwardCompatibilityDetection(object):
 
 
 class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
-    DATABASE = "sqlite"
+    databases = ["sqlite"]
 
     def test_accept_not_null_column_followed_by_adding_default(self):
         app = fixtures.ADD_NOT_NULL_COLUMN_FOLLOWED_BY_DEFAULT
@@ -92,8 +92,8 @@ class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDete
 
 
 class MySqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
-    DATABASE = "mysql"
+    databases = ["mysql"]
 
 
 class PostgresqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
-    DATABASE = "postgresql"
+    databases = ["postgresql"]
