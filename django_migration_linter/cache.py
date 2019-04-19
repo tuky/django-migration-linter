@@ -15,8 +15,6 @@
 import os
 import pickle
 
-from .utils import split_path
-
 
 class Cache(dict):
     def __init__(self, django_folder, cache_path):

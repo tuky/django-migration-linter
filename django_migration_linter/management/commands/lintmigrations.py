@@ -41,7 +41,8 @@ class Command(BaseCommand):
             type=str,
             nargs="?",
             help=(
-                "specify the database for which to generate the SQL. Defaults to default"
+                "specify the database for which to generate the SQL. "
+                "Defaults to default"
             ),
         )
 
