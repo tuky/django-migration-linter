@@ -54,7 +54,7 @@ setup(
     packages=find_packages(exclude=['tests/']),
     install_requires=["django", "appdirs"],
     extras_require={
-        'test': ["tox", "mysqlclient", "psycopg2-binary"]
+        'test': ["tox", "mysqlclient", "psycopg2-binary", "django_add_default_value"]
     },
 
     keywords='django migration lint linter database backward compatibility',
