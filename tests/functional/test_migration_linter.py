@@ -13,9 +13,9 @@
 # limitations under the License.
 import logging
 import os
+import unittest
 
 from django.conf import settings
-from django.test import TestCase
 
 from django_migration_linter import MigrationLinter
 from tests import fixtures
@@ -31,7 +31,7 @@ class BaseBackwardCompatibilityDetection(object):
     def _test_linter_finds_errors(self, app=None, commit_id=None):
         if app is not None:
             app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.databases[0], no_cache=True)
+        linter = MigrationLinter(self.test_project_path, include_apps=app, database=next(iter(self.databases)), no_cache=True)
         linter.lint_all_migrations(git_commit_id=commit_id)
 
         self.assertTrue(linter.has_errors)
@@ -40,7 +40,7 @@ class BaseBackwardCompatibilityDetection(object):
     def _test_linter_finds_no_errors(self, app=None, commit_id=None):
         if app is not None:
             app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=self.databases[0], no_cache=True)
+        linter = MigrationLinter(self.test_project_path, include_apps=app, database=next(iter(self.databases)), no_cache=True)
         linter.lint_all_migrations(git_commit_id=commit_id)
 
         self.assertFalse(linter.has_errors)
@@ -83,7 +83,7 @@ class BaseBackwardCompatibilityDetection(object):
         self._test_linter_finds_errors(commit_id='v0.1.4')
 
 
-class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
+class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
     databases = ["sqlite"]
 
     def test_accept_not_null_column_followed_by_adding_default(self):
@@ -91,9 +91,9 @@ class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDete
         self._test_linter_finds_errors(app)
 
 
-class MySqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
+class MySqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
     databases = ["mysql"]
 
 
-class PostgresqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, TestCase):
+class PostgresqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
     databases = ["postgresql"]
