@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class AppDropColumnConfig(AppConfig):
-    name = 'tests.test_project.app_drop_column'
+    name = "tests.test_project.app_drop_column"

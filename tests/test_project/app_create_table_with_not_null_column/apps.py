@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class AppCreateTableWithNotNullColumnConfig(AppConfig):
-    name = 'tests.test_project.app_create_table_with_not_null_column'
+    name = "tests.test_project.app_create_table_with_not_null_column"

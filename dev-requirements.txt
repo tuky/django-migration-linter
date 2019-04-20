@@ -1,4 +1,0 @@
-tox
-mysqlclient
-django_add_default_value
-psycopg2-binary

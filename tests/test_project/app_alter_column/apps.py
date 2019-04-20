@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class AppAlterColumnConfig(AppConfig):
-    name = 'tests.test_project.app_alter_column'
+    name = "tests.test_project.app_alter_column"

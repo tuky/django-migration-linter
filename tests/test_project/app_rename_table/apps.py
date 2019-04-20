@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class AppRenameTableConfig(AppConfig):
-    name = 'tests.test_project.app_rename_table'
+    name = "tests.test_project.app_rename_table"

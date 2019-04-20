@@ -16,7 +16,7 @@ import os
 
 _PROJ_TEST_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'tests/',
+    "tests/",
     "test_project",
 )
 

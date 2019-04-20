@@ -23,28 +23,33 @@ from tests import fixtures
 
 class BaseBackwardCompatibilityDetection(object):
     def setUp(self, *args, **kwargs):
-        logging.basicConfig(format="%(message)s", level=logging.WARNING)
+        # logging.basicConfig(format="%(message)s", level=logging.WARNING)
 
         self.test_project_path = os.path.dirname(settings.BASE_DIR)
         return super(BaseBackwardCompatibilityDetection, self).setUp(*args, **kwargs)
 
     def _test_linter_finds_errors(self, app=None, commit_id=None):
-        if app is not None:
-            app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=next(iter(self.databases)), no_cache=True)
-        linter.lint_all_migrations(git_commit_id=commit_id)
-
+        linter = self._launch_linter(app, commit_id)
         self.assertTrue(linter.has_errors)
         self.assertNotEqual(linter.nb_valid + linter.nb_erroneous, 0)
 
     def _test_linter_finds_no_errors(self, app=None, commit_id=None):
-        if app is not None:
-            app = [app]
-        linter = MigrationLinter(self.test_project_path, include_apps=app, database=next(iter(self.databases)), no_cache=True)
-        linter.lint_all_migrations(git_commit_id=commit_id)
-
+        linter = self._launch_linter(app, commit_id)
         self.assertFalse(linter.has_errors)
         self.assertNotEqual(linter.nb_valid + linter.nb_erroneous, 0)
+
+    def _launch_linter(self, app=None, commit_id=None):
+        if app is not None:
+            app = [app]
+
+        linter = MigrationLinter(
+            self.test_project_path,
+            include_apps=app,
+            database=next(iter(self.databases)),
+            no_cache=True,
+        )
+        linter.lint_all_migrations(git_commit_id=commit_id)
+        return linter
 
     # *** Tests ***
     def test_create_table_with_not_null_column(self):
@@ -80,10 +85,12 @@ class BaseBackwardCompatibilityDetection(object):
         self._test_linter_finds_errors(app)
 
     def test_with_git_ref(self):
-        self._test_linter_finds_errors(commit_id='v0.1.4')
+        self._test_linter_finds_errors(commit_id="v0.1.4")
 
 
-class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
+class SqliteBackwardCompatibilityDetectionTestCase(
+    BaseBackwardCompatibilityDetection, unittest.TestCase
+):
     databases = ["sqlite"]
 
     def test_accept_not_null_column_followed_by_adding_default(self):
@@ -91,9 +98,13 @@ class SqliteBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDete
         self._test_linter_finds_errors(app)
 
 
-class MySqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
+class MySqlBackwardCompatibilityDetectionTestCase(
+    BaseBackwardCompatibilityDetection, unittest.TestCase
+):
     databases = ["mysql"]
 
 
-class PostgresqlBackwardCompatibilityDetectionTestCase(BaseBackwardCompatibilityDetection, unittest.TestCase):
+class PostgresqlBackwardCompatibilityDetectionTestCase(
+    BaseBackwardCompatibilityDetection, unittest.TestCase
+):
     databases = ["postgresql"]
