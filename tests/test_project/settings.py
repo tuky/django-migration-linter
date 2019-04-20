@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from collections import OrderedDict
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -80,27 +82,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'tests.test_project.wsgi.application'
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
-    },
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'sqlite3',
-    },
-    'postgresql': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_migration_linter_test_project',
-        'USER': "postgres",
-    },
-    'mysql': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django_migration_linter_test_project',
-        'USER': "travis",
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-    },
+# TODO temp while https://github.com/3YOURMIND/django-add-default-value/issues/11 open
+DATABASES = OrderedDict()
+DATABASES['default'] = {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
+}
+DATABASES['sqlite'] = {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': 'sqlite3',
+}
+DATABASES['postgresql'] = {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': 'django_migration_linter_test_project',
+    'USER': "postgres",
+}
+DATABASES['mysql'] = {
+    'ENGINE': 'django.db.backends.mysql',
+    'NAME': 'django_migration_linter_test_project',
+    'USER': "travis",
+    'PASSWORD': '',
+    'HOST': '127.0.0.1',
 }
 
 
