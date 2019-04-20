@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import unittest
+
 from django.db.migrations import Migration
-from django.test import TestCase, override_settings
 
 from django_migration_linter import MigrationLinter
 
 
-class TestLinterFunctions(TestCase):
+class TestLinterFunctions(unittest.TestCase):
     def test_get_sql(self):
         linter = MigrationLinter()
         sql_statements = linter.get_sql('app_add_not_null_column', '0001')

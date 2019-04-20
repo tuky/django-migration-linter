@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'tests.test_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
     },
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -93,7 +93,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'django_migration_linter_test_project',
         'USER': "postgres",
-   },
+    },
     'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'django_migration_linter_test_project',
