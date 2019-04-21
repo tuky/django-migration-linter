@@ -21,11 +21,7 @@ from django.db.migrations import Migration
 
 from tests import fixtures
 
-from django_migration_linter import (
-    MigrationLinter,
-    DEFAULT_CACHE_PATH,
-    analyse_sql_statements,
-)
+from django_migration_linter import MigrationLinter, analyse_sql_statements
 
 if sys.version_info >= (3, 3):
     import unittest.mock as mock

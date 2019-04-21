@@ -146,7 +146,8 @@ class MigrationLinter(object):
             migrations = self._gather_all_migrations()
 
         # Lint those migrations
-        for m in migrations:
+        sorted_migrations = sorted(migrations, key=lambda m: (m.app_label, m.name))
+        for m in sorted_migrations:
             self.lint_migration(m)
 
         if self.should_use_cache():
