@@ -17,7 +17,7 @@ import unittest
 from django_migration_linter.utils import split_path, split_migration_path
 
 
-class SplitPathTest(unittest.TestCase):
+class SplitPathTestCase(unittest.TestCase):
     def test_split_path(self):
         split = split_path("foo/bar/fuz.py")
         self.assertEqual(split, ["foo", "bar", "fuz.py"])

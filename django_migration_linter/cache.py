@@ -17,9 +17,10 @@ import pickle
 
 
 class Cache(dict):
-    def __init__(self, django_folder, cache_path):
+    def __init__(self, django_folder, database, cache_path):
         self.filename = os.path.join(
-            cache_path, "{0}.pickle".format(django_folder.replace(os.sep, "_"))
+            cache_path,
+            "{0}_{1}.pickle".format(django_folder.replace(os.sep, "_"), database),
         )
 
         if not os.path.exists(os.path.dirname(self.filename)):

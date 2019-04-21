@@ -19,7 +19,7 @@ from django.db.migrations import Migration
 from django_migration_linter import MigrationLinter
 
 
-class TestLinterFunctions(unittest.TestCase):
+class LinterFunctionsTestCase(unittest.TestCase):
     def test_get_sql(self):
         linter = MigrationLinter()
         sql_statements = linter.get_sql("app_add_not_null_column", "0001")

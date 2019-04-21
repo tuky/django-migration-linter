@@ -58,8 +58,8 @@ class MigrationLinter(object):
             # TODO: need to have the database in the cache path, or different
             # databases will get cached values from another DB
             # TODO TODO TODO
-            self.old_cache = Cache(self.django_path, self.cache_path)
-            self.new_cache = Cache(self.django_path, self.cache_path)
+            self.old_cache = Cache(self.django_path, self.database, self.cache_path)
+            self.new_cache = Cache(self.django_path, self.database, self.cache_path)
             self.old_cache.load()
 
     def should_use_cache(self):
@@ -71,6 +71,7 @@ class MigrationLinter(object):
         print("({0}, {1})... ".format(app_label, migration_name), end="")
         self.nb_total += 1
 
+        # TODO: refactor
         hash_md5 = hashlib.md5()
         with open(get_migration_abspath(app_label, migration_name), "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
