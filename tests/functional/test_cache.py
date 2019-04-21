@@ -171,7 +171,7 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            analyse_sql_statements_mock.assert_called_once()
+            self.assertEqual(analyse_sql_statements_mock.call_count, 1)
 
         cache = linter.new_cache
         cache.load()
@@ -186,7 +186,7 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            analyse_sql_statements_mock.assert_called_once()
+            self.assertEqual(analyse_sql_statements_mock.call_count, 1)
 
     @mock.patch(
         "django_migration_linter.MigrationLinter._gather_all_migrations",
