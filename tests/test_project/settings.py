@@ -86,12 +86,18 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "TEST": {"DEPENDENCIES": []},
     },
-    "sqlite": {"ENGINE": "django.db.backends.sqlite3", "NAME": "sqlite3"},
+    "sqlite": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "sqlite3",
+        "TEST": {"DEPENDENCIES": []},
+    },
     "postgresql": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "django_migration_linter_test_project",
         "USER": "postgres",
+        "TEST": {"DEPENDENCIES": []},
     },
     "mysql": {
         "ENGINE": "django.db.backends.mysql",
@@ -99,6 +105,7 @@ DATABASES = {
         "USER": "travis",
         "PASSWORD": "",
         "HOST": "127.0.0.1",
+        "TEST": {"DEPENDENCIES": []},
     },
 }
 
