@@ -19,9 +19,11 @@ import unittest
 from django.conf import settings
 from django.db.migrations import Migration
 
-from tests import fixtures
-
-from django_migration_linter import MigrationLinter, analyse_sql_statements
+from django_migration_linter import (
+    MigrationLinter,
+    analyse_sql_statements,
+    get_migration_abspath,
+)
 
 if sys.version_info >= (3, 3):
     import unittest.mock as mock
@@ -50,13 +52,13 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            self.assertEqual(analyse_sql_statements_mock.call_count, 2)
+            self.assertEqual(2, analyse_sql_statements_mock.call_count)
 
         cache = linter.new_cache
         cache.load()
 
-        self.assertEqual(cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"], "OK")
-        self.assertEqual(cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"], "ERR")
+        self.assertEqual("OK", cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"])
+        self.assertEqual("ERR", cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"])
         self.assertListEqual(
             cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["errors"],
             [
@@ -102,13 +104,13 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            self.assertEqual(analyse_sql_statements_mock.call_count, 2)
+            self.assertEqual(2, analyse_sql_statements_mock.call_count)
 
         cache = linter.new_cache
         cache.load()
 
-        self.assertEqual(cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"], "OK")
-        self.assertEqual(cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"], "ERR")
+        self.assertEqual("OK", cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"])
+        self.assertEqual("ERR", cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"])
         self.assertListEqual(
             cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["errors"],
             [
@@ -129,13 +131,13 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            self.assertEqual(analyse_sql_statements_mock.call_count, 2)
+            self.assertEqual(2, analyse_sql_statements_mock.call_count)
 
         cache = linter.new_cache
         cache.load()
 
-        self.assertEqual(cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"], "OK")
-        self.assertEqual(cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"], "ERR")
+        self.assertEqual("OK", cache["4a3770a405738d457e2d23e17fb1f3aa"]["result"])
+        self.assertEqual("ERR", cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"])
         self.assertListEqual(
             cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["errors"],
             [
@@ -167,12 +169,12 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            self.assertEqual(analyse_sql_statements_mock.call_count, 1)
+            self.assertEqual(1, analyse_sql_statements_mock.call_count)
 
         cache = linter.new_cache
         cache.load()
 
-        self.assertEqual(cache["0fab48322ba76570da1a3c193abb77b5"]["result"], "IGNORE")
+        self.assertEqual("IGNORE", cache["0fab48322ba76570da1a3c193abb77b5"]["result"])
 
         # Start the Linter again -> should use cache now.
         linter = MigrationLinter(self.test_project_path)
@@ -182,56 +184,55 @@ class CacheTestCase(unittest.TestCase):
             wraps=analyse_sql_statements,
         ) as analyse_sql_statements_mock:
             linter.lint_all_migrations()
-            self.assertEqual(analyse_sql_statements_mock.call_count, 1)
+            self.assertEqual(1, analyse_sql_statements_mock.call_count)
 
     @mock.patch(
         "django_migration_linter.MigrationLinter._gather_all_migrations",
         return_value=[
-            Migration("0001_create_table", "app_add_not_null_column"),
-            Migration("0002_add_new_not_null_field", "app_add_not_null_column"),
+            Migration("0002_add_new_not_null_field", "app_add_not_null_column")
         ],
     )
-    @unittest.skip("find an easier way to make it work (file modification)")
     def test_cache_modified(self, *args):
         linter = MigrationLinter(self.test_project_path)
-        linter.lint_all_migrations()
-        cache = linter.old_cache
-        cache.load()
+        linter.old_cache.clear()
+        linter.old_cache.save()
 
-        print(cache.keys())
-        self.assertEqual(
-            "OK",
-            cache["348cddc5ae792175237a1d3069341455"]["result"],
-            "If this fails, tearDown might have failed to remove "
-            "the modification from the migration.",
-        )
-        self.assertEqual("ERR", cache["223007ccd7b35f565f925f1ccbbe6578"]["result"])
-        self.assertListEqual(
-            [
-                {
-                    u"err_msg": u"ALTERING columns (Could be backward compatible. "
-                    u"You may ignore this migration.)",
-                    u"code": u"ALTER_COLUMN",
-                    u"table": u"test_app_a",
-                    u"column": None,
-                }
-            ],
-            cache["223007ccd7b35f565f925f1ccbbe6578"]["errors"],
-        )
+        with mock.patch(
+            "django_migration_linter.migration_linter.analyse_sql_statements",
+            wraps=analyse_sql_statements,
+        ) as analyse_sql_statements_mock:
+            linter.lint_all_migrations()
+            self.assertEqual(1, analyse_sql_statements_mock.call_count)
 
-        # Modify migration
-        backup_migration_file = self.MIGRATION_FILE + "_backup"
-        shutil.copy2(self.MIGRATION_FILE, backup_migration_file)
-        with open(self.MIGRATION_FILE, "a") as f:
-            f.write("# modification at the end of the file")
-
-        # Start the Linter again -> Cache should look different now
-        linter = MigrationLinter(fixtures.ALTER_COLUMN)
-        linter.lint_all_migrations()
         cache = linter.new_cache
         cache.load()
-        shutil.copy2(backup_migration_file, self.MIGRATION_FILE)
-        os.remove(backup_migration_file)
 
-        self.assertNotIn("8589aa107b6da296c4b49cd2681d2230", cache)
-        self.assertEqual(cache["fbee628b1ab4bd1c14f8a4b41123e7cf"]["result"], "OK")
+        self.assertEqual("ERR", cache["19fd3ea688fc05e2cc2a6e67c0b7aa17"]["result"])
+
+        # Get the content of the migration file and mock the open call to append
+        # some content to change the hash
+        migration_path = get_migration_abspath(
+            "app_add_not_null_column", "0002_add_new_not_null_field"
+        )
+        with open(migration_path, "rb") as f:
+            file_content = f.read()
+        file_content += b"# test comment"
+
+        linter = MigrationLinter(self.test_project_path)
+        with mock.patch(
+            "django_migration_linter.migration_linter.open",
+            mock.mock_open(read_data=file_content),
+        ):
+            with mock.patch(
+                "django_migration_linter.migration_linter.analyse_sql_statements",
+                wraps=analyse_sql_statements,
+            ) as analyse_sql_statements_mock:
+                linter.lint_all_migrations()
+                self.assertEqual(1, analyse_sql_statements_mock.call_count)
+
+        cache = linter.new_cache
+        cache.load()
+
+        self.assertNotIn("19fd3ea688fc05e2cc2a6e67c0b7aa17", cache)
+        self.assertEqual(1, len(cache))
+        self.assertEqual("ERR", cache["a25768641a0ad526fad199f97c303784"]["result"])

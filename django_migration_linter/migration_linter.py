@@ -55,9 +55,6 @@ class MigrationLinter(object):
 
         # Initialise cache. Read from old, write to new to prune old entries.
         if self.should_use_cache():
-            # TODO: need to have the database in the cache path, or different
-            # databases will get cached values from another DB
-            # TODO TODO TODO
             self.old_cache = Cache(self.django_path, self.database, self.cache_path)
             self.new_cache = Cache(self.django_path, self.database, self.cache_path)
             self.old_cache.load()
