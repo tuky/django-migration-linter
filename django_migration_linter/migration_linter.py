@@ -35,17 +35,26 @@ DJANGO_APPS_WITH_MIGRATIONS = ("admin", "auth", "contenttypes", "sessions")
 
 
 class MigrationLinter(object):
-    def __init__(self, path=None, **kwargs):
+    def __init__(
+        self,
+        path=None,
+        ignore_name_contains=None,
+        ignore_name=tuple(),
+        include_apps=None,
+        exclude_apps=None,
+        database=DEFAULT_DB_ALIAS,
+        cache_path=DEFAULT_CACHE_PATH,
+        no_cache=False,
+    ):
         # Store parameters and options
-        # TODO: explicit kwargs
         self.django_path = path
-        self.ignore_name_contains = kwargs.get("ignore_name_contains", None)
-        self.ignore_name = kwargs.get("ignore_name", None) or tuple()
-        self.include_apps = kwargs.get("include_apps", None)
-        self.exclude_apps = kwargs.get("exclude_apps", None)
-        self.database = kwargs.get("database", None) or DEFAULT_DB_ALIAS
-        self.cache_path = kwargs.get("cache_path", None) or DEFAULT_CACHE_PATH
-        self.no_cache = kwargs.get("no_cache", None) or False
+        self.ignore_name_contains = ignore_name_contains
+        self.ignore_name = ignore_name
+        self.include_apps = include_apps
+        self.exclude_apps = exclude_apps
+        self.database = database
+        self.cache_path = cache_path
+        self.no_cache = no_cache
 
         # Initialise counters
         self.nb_valid = 0
@@ -62,18 +71,30 @@ class MigrationLinter(object):
     def should_use_cache(self):
         return self.django_path and not self.no_cache
 
+    def lint_all_migrations(self, git_commit_id=None):
+        # Collect migrations
+        if git_commit_id:
+            migrations = self._gather_migrations_git(git_commit_id)
+        else:
+            migrations = self._gather_all_migrations()
+
+        # Lint those migrations
+        sorted_migrations = sorted(
+            migrations, key=lambda migration: (migration.app_label, migration.name)
+        )
+        for m in sorted_migrations:
+            self.lint_migration(m)
+
+        if self.should_use_cache():
+            self.new_cache.save()
+
     def lint_migration(self, migration):
         app_label = migration.app_label
         migration_name = migration.name
         print("({0}, {1})... ".format(app_label, migration_name), end="")
         self.nb_total += 1
 
-        # TODO: refactor
-        hash_md5 = hashlib.md5()
-        with open(get_migration_abspath(app_label, migration_name), "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        md5hash = hash_md5.hexdigest()
+        md5hash = self.get_migration_hash(app_label, migration_name)
 
         if self.should_use_cache() and md5hash in self.old_cache:
             self.lint_cached_migration(md5hash)
@@ -108,6 +129,14 @@ class MigrationLinter(object):
         if self.should_use_cache():
             self.new_cache[md5hash] = {"result": "ERR", "errors": errors}
 
+    @staticmethod
+    def get_migration_hash(app_label, migration_name):
+        hash_md5 = hashlib.md5()
+        with open(get_migration_abspath(app_label, migration_name), "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
     def lint_cached_migration(self, md5hash):
         cached_value = self.old_cache[md5hash]
         if cached_value["result"] == "IGNORE":
@@ -134,21 +163,6 @@ class MigrationLinter(object):
                     error_str += ", column: {0}".format(err["column"])
                 error_str += ")"
             print(error_str)
-
-    def lint_all_migrations(self, git_commit_id=None):
-        # Collect migrations
-        if git_commit_id:
-            migrations = self._gather_migrations_git(git_commit_id)
-        else:
-            migrations = self._gather_all_migrations()
-
-        # Lint those migrations
-        sorted_migrations = sorted(migrations, key=lambda m: (m.app_label, m.name))
-        for m in sorted_migrations:
-            self.lint_migration(m)
-
-        if self.should_use_cache():
-            self.new_cache.save()
 
     def print_summary(self):
         print("*** Summary:")
@@ -206,7 +220,8 @@ class MigrationLinter(object):
             raise Exception("Error while executing git diff command")
         return migrations
 
-    def _gather_all_migrations(self):
+    @staticmethod
+    def _gather_all_migrations():
         from django.db.migrations.loader import MigrationLoader
 
         migration_loader = MigrationLoader(connection=None, load=False)
